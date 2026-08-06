@@ -1,0 +1,62 @@
+# Secrets and local machine configuration
+.env
+.env.*
+!.env.example
+*.local
+*.secret
+*.secrets
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Generated builds and publish output
+dist/
+dashboard/dist/
+**/bin/
+**/obj/
+*.exe
+*.dll
+*.pdb
+
+# Logs and runtime traces
+logs/
+*.log
+*.err
+*.out
+dashboard/lab-logs/
+
+# Tool caches and temporary files
+.vite/
+.vite-temp/
+**/.vite/
+**/.vite-temp/
+.cache/
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.swp
+Thumbs.db
+desktop.ini
+
+# Local captures and diagnostics
+icloud.html
+screen.png
+AIDA64_diagnostic_*
+aida_lcd_keys_snapshot.txt
+
+# Broken Git metadata preserved during recovery
+.git-corrupt-backup-*/
+
+# Large local backup and lab workspaces not needed for source rollback
+*Backups/
+*_Backups/
+*_Lab/
+Theme_Backups/
+QGT_Themes/Original_Backup/
+aida64-backups/
+aida64-storage-trace/
+OpenRGB_*_Lab/
+OpenRGB_Production_Switch/

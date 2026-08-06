@@ -1,0 +1,22 @@
+{
+  "displayName": "Cipher",
+  "version": "0.9.0",
+  "dashboard": {
+    "theme": "cipher-dark",
+    "defaultMode": "idle",
+    "clockFormat": "12-hour",
+    "operatorMode": "work"
+  },
+  "telemetryProvider": "mock",
+  "integrationsProvider": "mock",
+  "features": {
+    "voiceSimulation": true,
+    "realVoice": false,
+    "microphone": false,
+    "telemetry": true,
+    "realTelemetry": false,
+    "hardwareControl": false,
+    "externalIntegrations": false,
+    "commandExecution": false
+  }
+}

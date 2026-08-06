@@ -1,0 +1,42 @@
+export const themes = Object.freeze([
+  {
+    id: 'PurpleBlue',
+    name: 'PurpleBlue',
+    style: 'Electric violet and cyan',
+    colors: ['#8b2cff', '#15dfff'],
+    labelColors: ['#8b2cff', '#15dfff'],
+    aidaLayout: 'QGT_Neon_PurpleBlue.ralcd',
+  },
+  {
+    id: 'Inferno',
+    name: 'Inferno',
+    style: 'Crimson red and bright orange',
+    colors: ['#ff304f', '#ff8a18'],
+    labelColors: ['#ff8a18', '#ff8a18'],
+    aidaLayout: 'QGT_Inferno_RedOrange.ralcd',
+  },
+  {
+    id: 'Ice',
+    name: 'Ice',
+    style: 'Frost white and arctic cyan',
+    colors: ['#e9fbff', '#38dfff'],
+    labelColors: ['#e9fbff', '#38dfff'],
+    aidaLayout: 'QGT_Ice_WhiteCyan.ralcd',
+  },
+  {
+    id: 'Matrix',
+    name: 'Matrix',
+    style: 'Neon green and electric lime',
+    colors: ['#19ff70', '#b6ff23'],
+    labelColors: ['#19ff70', '#19ff70'],
+    aidaLayout: 'QGT_Matrix_Green.ralcd',
+  },
+  {
+    id: 'Stealth',
+    name: 'Stealth',
+    style: 'Clean white and brushed silver',
+    colors: ['#ffffff', '#8ea3ad'],
+    labelColors: ['#ffffff', '#ffffff'],
+    aidaLayout: 'QGT_Stealth_White.ralcd',
+  },
+]);
