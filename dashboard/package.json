@@ -7,6 +7,7 @@
     "dev": "vite",
     "aida64:bridge": "node scripts/aida64-aio-bridge.mjs",
     "build": "vite build",
+    "start:prod": "node server/start-prod.js",
     "preview": "vite preview",
     "check": "vite build",
     "test": "node --test"
