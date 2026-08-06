@@ -36,6 +36,8 @@ internal sealed class LauncherForm : Form
 {
     private static readonly string RootPath = @"C:\Cipher Core";
     private static readonly string DashboardPath = Path.Combine(RootPath, "dashboard");
+    private static readonly string DashboardDistPath = Path.Combine(DashboardPath, "dist");
+    private static readonly string DashboardIndexPath = Path.Combine(DashboardDistPath, "index.html");
     private static readonly string LogPath = Path.Combine(RootPath, "logs", "launcher.log");
     private static readonly Uri DashboardUri = new("http://127.0.0.1:5173/");
     private static readonly Uri ReadinessUri = new("http://127.0.0.1:5173/api/startup-gateway/status");
@@ -216,17 +218,23 @@ internal sealed class LauncherForm : Form
             throw new DirectoryNotFoundException($"Dashboard folder was not found: {DashboardPath}");
         }
 
-        SetStatus("Starting local services", "Launching dashboard server");
+        if (!File.Exists(DashboardIndexPath))
+        {
+            throw new FileNotFoundException(
+                $"Production dashboard assets were not found: {DashboardIndexPath}. Run npm.cmd run build before launching Cipher Core.");
+        }
+
+        SetStatus("Starting local services", "Launching production dashboard server");
         string npmPath = ResolveOnPath("npm.cmd")
             ?? throw new FileNotFoundException("npm.cmd was not found in PATH. Install Node.js or add npm.cmd to PATH.");
-        Log("process start: npm.cmd run dev -- --host 127.0.0.1 --port 5173");
+        Log("process start: npm.cmd run start:prod");
         Log("npm path: " + npmPath);
         Log("process working directory: " + DashboardPath);
 
         ProcessStartInfo startInfo = new()
         {
             FileName = Environment.GetEnvironmentVariable("ComSpec") ?? "cmd.exe",
-            Arguments = $"/d /s /c \"\"{npmPath}\" run dev -- --host 127.0.0.1 --port 5173\"",
+            Arguments = $"/d /s /c \"\"{npmPath}\" run start:prod\"",
             WorkingDirectory = DashboardPath,
             UseShellExecute = false,
             CreateNoWindow = true,
