@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
   createCipherResponse,
@@ -12,6 +13,8 @@ import {
   requestVoiceSpeech,
   voiceScripts,
 } from '../src/services/voice/voiceService.js';
+
+const voiceHookSource = () => readFileSync(new URL('../src/hooks/useVoice.js', import.meta.url), 'utf8');
 
 test('missing Fish Audio environment stays in simulation mode without a network call', async () => {
   let calls = 0;
@@ -229,4 +232,26 @@ test('speech recognition maps provider failures to friendly Cipher statuses', as
     session.promise,
     (error) => error.message === 'Microphone permission denied.',
   );
+});
+
+test('voice hook uses replaceable audio handlers instead of accumulating playback listeners', () => {
+  const source = voiceHookSource();
+
+  assert.match(source, /audio\.ontimeupdate =/);
+  assert.match(source, /audio\.onended =/);
+  assert.match(source, /audio\.onerror =/);
+  assert.match(source, /clearAudioHandlers/);
+  assert.doesNotMatch(source, /audio\.addEventListener\('timeupdate'/);
+  assert.doesNotMatch(source, /audio\.addEventListener\('ended'/);
+  assert.doesNotMatch(source, /audio\.addEventListener\('error'/);
+});
+
+test('voice hook guards stale requests and playback events with the active operation token', () => {
+  const source = voiceHookSource();
+
+  assert.match(source, /operationRef\.current \+= 1/);
+  assert.match(source, /if \(operation !== operationRef\.current\) return;/);
+  assert.match(source, /playSimulation\(result, operation\)/);
+  assert.match(source, /playAudio\(result, operation\)/);
+  assert.match(source, /finish\(operation\)/);
 });

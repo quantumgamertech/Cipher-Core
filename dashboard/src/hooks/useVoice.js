@@ -19,6 +19,13 @@ export function useVoice(onCompanionStateChange) {
   const recognitionRef = useRef(null);
   const operationRef = useRef(0);
 
+  const clearAudioHandlers = useCallback((audio) => {
+    if (!audio) return;
+    audio.ontimeupdate = null;
+    audio.onended = null;
+    audio.onerror = null;
+  }, []);
+
   const primeAudioPlayback = useCallback(() => {
     const audio = new Audio();
     audio.preload = 'auto';
@@ -34,6 +41,7 @@ export function useVoice(onCompanionStateChange) {
 
   const releaseAudio = useCallback(() => {
     if (audioRef.current) {
+      clearAudioHandlers(audioRef.current);
       audioRef.current.pause();
       audioRef.current.src = '';
       audioRef.current = null;
@@ -42,7 +50,7 @@ export function useVoice(onCompanionStateChange) {
       URL.revokeObjectURL(audioUrlRef.current);
       audioUrlRef.current = '';
     }
-  }, []);
+  }, [clearAudioHandlers]);
 
   const stop = useCallback(() => {
     operationRef.current += 1;
@@ -59,7 +67,8 @@ export function useVoice(onCompanionStateChange) {
     onCompanionStateChange?.('idle');
   }, [onCompanionStateChange, releaseAudio]);
 
-  const finish = useCallback(() => {
+  const finish = useCallback((operation = operationRef.current) => {
+    if (operation !== operationRef.current) return;
     releaseAudio();
     setSpeech(null);
     setProgress(0);
@@ -67,7 +76,8 @@ export function useVoice(onCompanionStateChange) {
     onCompanionStateChange?.('idle');
   }, [onCompanionStateChange, releaseAudio]);
 
-  const playSimulation = useCallback((result) => {
+  const playSimulation = useCallback((result, operation = operationRef.current) => {
+    if (operation !== operationRef.current) return;
     const nextSpeech = {
       ...createSimulatedSpeech(result.text),
       durationMs: result.durationMs,
@@ -79,18 +89,25 @@ export function useVoice(onCompanionStateChange) {
     setVoiceMode('simulation');
     onCompanionStateChange?.('speaking');
     timerRef.current = window.setInterval(() => {
+      if (operation !== operationRef.current) {
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
+        return;
+      }
       const elapsed = Date.now() - startedAtRef.current;
       const nextProgress = Math.min(100, (elapsed / nextSpeech.durationMs) * 100);
       setProgress(nextProgress);
       if (nextProgress >= 100) {
         window.clearInterval(timerRef.current);
         timerRef.current = null;
-        completionRef.current = window.setTimeout(finish, 300);
+        completionRef.current = window.setTimeout(() => finish(operation), 300);
       }
     }, 80);
   }, [finish, onCompanionStateChange]);
 
-  const playAudio = useCallback(async (result) => {
+  const playAudio = useCallback(async (result, operation = operationRef.current) => {
+    if (operation !== operationRef.current) return;
+    releaseAudio();
     const url = URL.createObjectURL(result.audio);
     const audio = audioRef.current || new Audio();
     audio.pause();
@@ -103,36 +120,42 @@ export function useVoice(onCompanionStateChange) {
     setProgress(0);
     setVoiceMode('live');
     onCompanionStateChange?.('speaking');
-    audio.addEventListener('timeupdate', () => {
+    audio.ontimeupdate = () => {
+      if (operation !== operationRef.current) return;
       if (Number.isFinite(audio.duration) && audio.duration > 0) {
         setProgress(Math.min(100, (audio.currentTime / audio.duration) * 100));
       }
-    });
-    audio.addEventListener('ended', finish, { once: true });
-    audio.addEventListener('error', () => {
+    };
+    audio.onended = () => finish(operation);
+    audio.onerror = () => {
+      if (operation !== operationRef.current) return;
       setVoiceError('Audio playback failed.');
       setVoiceMode('error');
-      finish();
-    }, { once: true });
+      finish(operation);
+    };
     try {
       await audio.play();
     } catch (error) {
+      if (operation !== operationRef.current) return;
       console.error('[Cipher Voice] Audio playback failed.', error);
       throw new Error('Audio playback failed.');
     }
-  }, [finish, onCompanionStateChange]);
+  }, [finish, onCompanionStateChange, releaseAudio]);
 
   const speak = useCallback(async (text) => {
     stop();
+    const operation = operationRef.current;
     primeAudioPlayback();
     setVoiceError('');
     setVoiceMode('connecting');
     setSpeech({ text, source: 'loading' });
     try {
       const result = await requestVoiceSpeech(text);
-      if (result.mode === 'simulation') playSimulation(result);
-      else await playAudio(result);
+      if (operation !== operationRef.current) return;
+      if (result.mode === 'simulation') playSimulation(result, operation);
+      else await playAudio(result, operation);
     } catch (error) {
+      if (operation !== operationRef.current) return;
       releaseAudio();
       setSpeech(null);
       setProgress(0);
@@ -174,8 +197,8 @@ export function useVoice(onCompanionStateChange) {
       setSpeech({ text: response, source: 'loading' });
       const result = await requestVoiceSpeech(response);
       if (operation !== operationRef.current) return;
-      if (result.mode === 'simulation') playSimulation(result);
-      else await playAudio(result);
+      if (result.mode === 'simulation') playSimulation(result, operation);
+      else await playAudio(result, operation);
     } catch (error) {
       if (operation !== operationRef.current) return;
       recognitionRef.current = null;
